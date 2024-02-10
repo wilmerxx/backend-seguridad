@@ -42,3 +42,6 @@ class CookieController_Edge:
 
     def obtener_llave_session(self):
          return self.service.obtener_llave_session()
+
+    def get_edge_cookies(self):
+        return self.service.get_edge_cookies()
