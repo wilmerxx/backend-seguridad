@@ -1,3 +1,4 @@
+from models import firefox
 from services.cookie_service import CookieService_Firefox, CookieService_Edge
 
 
@@ -22,6 +23,9 @@ class CookieController_Firefox:
     def decrypt_firefox(self, encrypted_value):
         return self.service.decrypt_firefox(encrypted_value)
 
+    def obtener_contrasenias(self):
+        return [firefox.to_dict() for firefox in self.service.obtener_contrasenias()]
+
 
 class CookieController_Edge:
     def __init__(self):
@@ -40,8 +44,5 @@ class CookieController_Edge:
     def count_session_cookies(self):
         return self.service.count_session_cookies()
 
-    def obtener_llave_session(self):
-         return self.service.obtener_llave_session()
-
-    def get_edge_cookies(self):
-        return self.service.get_edge_cookies()
+    def obtener_usuario_contrasenia(self):
+         return [cookie.to_dict() for cookie in self.service.obtener_usuario_contrasenia()]

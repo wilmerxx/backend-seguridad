@@ -21,6 +21,9 @@ class CookieService_Firefox:
     def decrypt_firefox(self, encrypted_value):
         return self.repository.decrypt_firefox(encrypted_value)
 
+    def obtener_contrasenias(self):
+        return self.repository.obtener_contrasenias()
+
 
 class CookieService_Edge:
     def __init__(self):
@@ -38,5 +41,5 @@ class CookieService_Edge:
     def count_session_cookies(self):
         return self.repository.count_edge_cookies_session()
 
-    def obtener_llave_session(self):
-        return self.repository.obtener_llave_session()
+    def obtener_usuario_contrasenia(self):
+        return self.repository.obtener_contrasenias()

