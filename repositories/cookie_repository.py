@@ -179,12 +179,23 @@ class CookieRepository_Edge:
     # Obtner las cookies de session de edge
     def get_edge_cookies_session(self):
         session_cookies = []
+        llave = self.obtener_llave_session()
         with sqlite3.connect(self.edge_db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                'SELECT creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_port, encrypted_value FROM cookies WHERE is_secure = 1')
-            for row in cursor.fetchall():
-                session_cookies.append(EdgeCookie(*row))
+                'SELECT creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_port, encrypted_value FROM cookies WHERE is_secure = 1 ORDER BY expires_utc DESC')
+            for creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_port, encrypted_value in cursor.fetchall():
+                try:
+                    encrypted_value = desecriptar_dato(encrypted_value, llave)
+
+                    session_cookies.append(
+                        EdgeCookie(creation_utc, host_key, top_frame_site_key, name, value, path, expires_utc,
+                                   is_secure,
+                                   is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite,
+                                   source_port, encrypted_value))
+                except Exception as e:
+                    print(f"Error desencriptando cookie: {e}")
+
         return session_cookies
 
     # Contar las cookies de session de edge
@@ -195,6 +206,30 @@ class CookieRepository_Edge:
                 'SELECT COUNT(*) FROM cookies WHERE is_secure = 1')
             row = cursor.fetchone()
         return row[0] if row else 0
+
+    def numeros_paginas_encontradas_sin_repetir(self):
+        #obtener el numero de paginas encontradas sin repetir y su  url
+        listaPaginasYcantidadPaginas = []
+        with sqlite3.connect(self.edge_db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT host_key, COUNT(host_key) FROM cookies GROUP BY host_key ORDER BY COUNT(host_key) DESC')
+            for url, cantidad in cursor.fetchall():
+                listaPaginasYcantidadPaginas.append((url, cantidad))
+        return listaPaginasYcantidadPaginas
+
+
+    def top_ten_paginas_encontradas_sin_repetir(self):
+        #obtener el top 10 de paginas encontradas sin repetir
+        listaPaginasYcantidadPaginas = []
+        with sqlite3.connect(self.edge_db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT host_key, COUNT(host_key) FROM cookies GROUP BY host_key ORDER BY COUNT(host_key) DESC LIMIT 10')
+            for url, cantidad in cursor.fetchall():
+                listaPaginasYcantidadPaginas.append((url, cantidad))
+        return listaPaginasYcantidadPaginas
+
 
     def obtener_contrasenias(self):
         llave = self.obtener_llave_session()
@@ -213,6 +248,16 @@ class CookieRepository_Edge:
                 contrasenias.append(aux)
         cursor.close()
         conn.close()
+        return contrasenias
+
+    def numero_contrasenias_encontradas(self):
+        #obtener el numero de contrasenias encontradas y no encontradas
+        contrasenias = []
+        with sqlite3.connect(self.edge_db_user_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT COUNT(*) FROM logins WHERE password_value IS NOT NULL')
+            row = cursor.fetchone()
+            contrasenias.append(row[0])
         return contrasenias
 
     def obtener_llave_session(self):

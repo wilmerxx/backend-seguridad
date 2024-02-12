@@ -43,3 +43,13 @@ class CookieService_Edge:
 
     def obtener_usuario_contrasenia(self):
         return self.repository.obtener_contrasenias()
+
+    def numeros_paginas_encontradas_sin_repetir(self):
+        return self.repository.numeros_paginas_encontradas_sin_repetir()
+
+    def top_ten_paginas_encontradas_sin_repetir(self):
+        return self.repository.top_ten_paginas_encontradas_sin_repetir()
+
+    def numero_contrasenias_encontradas(self):
+        return self.repository.numero_contrasenias_encontradas()
+
