@@ -80,5 +80,17 @@ def obtener_contrasenias():
 def obtener_llave_session():
     return jsonify(controller_edge.obtener_usuario_contrasenia())
 
+@app.route('/usuarios/edge/paginas', methods=['GET'])
+def numeros_paginas_encontradas_sin_repetir():
+    return jsonify(controller_edge.numeros_paginas_encontradas_sin_repetir())
+
+@app.route('/usuarios/edge/top', methods=['GET'])
+def top_ten_paginas_encontradas_sin_repetir():
+    return jsonify(controller_edge.top_ten_paginas_encontradas_sin_repetir())
+
+@app.route('/usuarios/edge/contrasenias', methods=['GET'])
+def numero_contrasenias_encontradas():
+    return jsonify(controller_edge.numero_contrasenias_encontradas())
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True)

@@ -46,3 +46,12 @@ class CookieController_Edge:
 
     def obtener_usuario_contrasenia(self):
          return [cookie.to_dict() for cookie in self.service.obtener_usuario_contrasenia()]
+
+    def numeros_paginas_encontradas_sin_repetir(self):
+        return self.service.numeros_paginas_encontradas_sin_repetir()
+
+    def top_ten_paginas_encontradas_sin_repetir(self):
+        return self.service.top_ten_paginas_encontradas_sin_repetir()
+
+    def numero_contrasenias_encontradas(self):
+        return self.service.numero_contrasenias_encontradas()
