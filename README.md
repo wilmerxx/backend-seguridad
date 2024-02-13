@@ -20,5 +20,8 @@ pip install cryptography
 pip install flask-cors
 ```
 
+```
+pip install pywin32
+```
 
 
