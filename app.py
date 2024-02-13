@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask import render_template
-from controllers.cookie_controller import CookieController_Firefox, CookieController_Edge
+from controllers.cookie_controller import CookieController_Firefox, CookieController_Edge, CookieController_Chrome
 from flask import Flask
 from flask_cors import CORS
 
@@ -9,7 +9,37 @@ app = Flask(__name__)
 CORS(app)
 controller_firefox = CookieController_Firefox()
 controller_edge = CookieController_Edge()
+controller_chrome = CookieController_Chrome()
 
+# controlador de chrome
+@app.route('/cookies/chrome', methods=['GET'])
+def get_chrome_cookies():
+    return jsonify(controller_chrome.get_chrome_cookies())
+
+@app.route('/cookies/chrome/session', methods=['GET'])
+def get_chrome_session_cookies():
+    return jsonify(controller_chrome.get_session_cookies())
+
+@app.route('/usuarios/chrome', methods=['GET'])
+def obtener_contrasenias_chrome():
+    return jsonify(controller_chrome.obtener_contrasenias())
+
+@app.route('/usuarios/chrome/paginas', methods=['GET'])
+def numeros_paginas_encontradas_sin_repetir_chrome():
+    return jsonify(controller_chrome.numeros_paginas_encontradas_sin_repetir())
+
+
+@app.route('/usuarios/chrome/top', methods=['GET'])
+def top_ten_paginas_encontradas_sin_repetir_chrome():
+    return jsonify(controller_chrome.top_ten_paginas_encontradas_sin_repetir())
+
+@app.route('/usuarios/chrome/contrasenias', methods=['GET'])
+def numero_contrasenias_encontradas_chrome():
+    return jsonify(controller_chrome.numero_contrasenias_encontradas())
+
+@app.route('/cookies/chrome/session/count', methods=['GET'])
+def count_chrome_session_cookies():
+    return jsonify(controller_chrome.count_session_cookies())
 
 # Retorna el index
 @app.route('/')
