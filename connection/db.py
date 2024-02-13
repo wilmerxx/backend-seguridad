@@ -22,6 +22,7 @@ def conexion_db_cookies_edge():
                                     "Default", 'Network', "Cookies")
 
         if verificar_conexion(edge_db_path):
+
             #si existe una copia de la base de datos se procede a borrala
             if os.path.exists(edge_db_path + "copia"):
                 os.remove(edge_db_path + "copia")

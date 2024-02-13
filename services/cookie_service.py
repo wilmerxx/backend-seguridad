@@ -1,4 +1,32 @@
 from repositories.cookie_repository import CookieRepository_Firefox, CookieRepository_Edge
+from repositories.chrome_cookies_repositorio import CookieRepository_Chrome
+
+class CookieService_Chrome:
+    def __init__(self):
+        self.repository = CookieRepository_Chrome()
+
+    # Obtner las cookies de chrome
+    def get_chrome_cookies(self):
+        return self.repository.get_chrome_cookies()
+
+    # Obtner las cookies de session de chrome
+    def get_session_cookies(self):
+        return self.repository.get_chrome_cookies_session()
+
+    def obtener_contrasenias(self):
+        return self.repository.obtener_contrasenias()
+
+    def numeros_paginas_encontradas_sin_repetir(self):
+        return self.repository.numeros_paginas_encontradas_sin_repetir()
+
+    def top_ten_paginas_encontradas_sin_repetir(self):
+        return self.repository.top_ten_paginas_encontradas_sin_repetir()
+
+    def numero_contrasenias_encontradas(self):
+        return self.repository.numero_contrasenias_encontradas()
+
+    def count_session_cookies(self):
+        return self.repository.count_session_cookies()
 
 
 class CookieService_Firefox:
