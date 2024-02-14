@@ -1,13 +1,12 @@
 from flask import Flask, jsonify, request
 from flask import render_template
-from controllers.cookie_controller import CookieController_Firefox, CookieController_Edge, CookieController_Chrome
+from controllers.cookie_controller import CookieController_Edge, CookieController_Chrome
 from flask import Flask
 from flask_cors import CORS
 
 
 app = Flask(__name__)
 CORS(app)
-controller_firefox = CookieController_Firefox()
 controller_edge = CookieController_Edge()
 controller_chrome = CookieController_Chrome()
 
@@ -86,40 +85,7 @@ def numero_contrasenias_encontradas():
     return jsonify(controller_edge.numero_contrasenias_encontradas())
 
 ############################################################################################################
-# controlador de firefox
-@app.route('/cookies/firefox', methods=['GET'])
-def get_firefox_cookies():
-    return jsonify(controller_firefox.get_firefox_cookies())
 
-    # Obtner las cookies de session de firefox
-
-
-@app.route('/cookies/firefox/session', methods=['GET'])
-def get_firefox_session_cookies():
-    return jsonify(controller_firefox.get_session_cookies())
-
-    # Contar las cookies de session de firefox
-
-
-@app.route('/cookies/firefox/session/count', methods=['GET'])
-def count_firefox_session_cookies():
-    return jsonify(controller_firefox.count_session_cookies())
-
-    # Desencriptar cookies de firefox
-
-
-@app.route('/decrypt/firefox', methods=['GET'])
-def decrypt_firefox():
-    encrypted_value = request.args.get('encrypted_value')
-    if encrypted_value is None:
-        return jsonify({"error": "No se proporcionó un valor cifrado"}), 400
-    result = controller_firefox.decrypt_firefox(encrypted_value)
-    return jsonify(result)
-
- # Obtener contraseñas de firefox
-@app.route('/usuarios/firefox', methods=['GET'])
-def obtener_contrasenias():
-    return jsonify(controller_firefox.obtener_contrasenias())
 
 
 if __name__ == '__main__':
